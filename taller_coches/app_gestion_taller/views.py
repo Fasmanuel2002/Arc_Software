@@ -3,13 +3,21 @@ from .models import Cliente, Coche, Servicio, CocheServicio
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.shortcuts import render
 import json
 from typing import Any
 
-def lista_clientes(request) -> JsonResponse:
+"""def lista_clientes(request) -> JsonResponse:
     clientes = list(Cliente.objects.values("id", "nombre", "telefono", "email"))
     return JsonResponse(clientes, safe=False)
+"""
 
+
+def lista_clientes(request):
+    clientes = Cliente.objects.all()
+    return render(request, 'app_gestion_taller/lista_clientes.html', {'clientes': clientes})
+
+"""
 def detalle_cliente(request, client_id : int) -> JsonResponse:
     try:
         cliente = Cliente.objects.values("id", "nombre", "telefono", "emial").get(id=client_id)
@@ -17,7 +25,19 @@ def detalle_cliente(request, client_id : int) -> JsonResponse:
     except Cliente.DoesNotExist:
         
         return JsonResponse({"error": "Cliente no encontrado"}, status=404)
+"""
 
+def detalle_cliente(request, cliente_id):
+    try:
+        cliente = Cliente.objects.get(id=cliente_id)
+        coches = Coche.objects.filter(cliente=cliente)
+        contexto = {
+            'clientes': cliente,
+            'coches' : coches
+        }
+        return render(request, 'app_gestion_taller/detalle_cliente.html', contexto)
+    except Cliente.DoesNotExist:
+        return JsonResponse({"error": "Cliente no encontrado"}, status=404)
 
 
 @csrf_exempt
@@ -113,7 +133,21 @@ def buscar_coches_de_cliente(request, cliente_id) -> JsonResponse:
         return JsonResponse({"error": "Cliente no encontrado"}, status=404)
 
 
-@csrf_exempt
+
+def buscar_servicios_de_coche(request, coche_id):
+    try:
+        coche = Coche.objects.get(id=coche_id)
+        coche_servicios = CocheServicio.objects.filter(coche=coche).select_related('servicio')
+        contexto = {
+            'coche': coche,
+            'coche_servicios': coche_servicios,
+        }
+        return render(request, 'app_gestion_taller/servicios_coche.html', contexto)
+    except Coche.DoesNotExist:
+        return JsonResponse({"error": "Coche no encontrado"}, status=404)
+        
+
+"""@csrf_exempt
 def buscar_servicios_de_coche(request, coche_id):
     try:
         coche = Coche.objects.get(id=coche_id)
@@ -133,4 +167,6 @@ def buscar_servicios_de_coche(request, coche_id):
         }
         return JsonResponse(respuesta)
     except Coche.DoesNotExist:
-        return JsonResponse({"error": "Coche no encontrado"}, status=404)
+        return JsonResponse({"error": "Coche no encontrado"}, status=404)"""
+        
+        
