@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Servicios del coche</title>
+</head>
+<body>
+    <h1>{{ coche.marca }} {{ coche.modelo }}</h1>
+    <p>Matrícula: {{ coche.matricula }}</p>
+
+    <h2>Historial de servicios</h2>
+
+    {% if coche_servicios %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Servicio</th>
+                    <th>Descripción</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cs in coche_servicios %}
+                <tr>
+                    <td>{{ cs.servicio.nombre }}</td>
+                    <td>{{ cs.servicio.descripcion }}</td>
+                    <td>{{ cs.fecha }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Este coche no tiene servicios registrados.</p>
+    {% endif %}
+</body>
+</html>

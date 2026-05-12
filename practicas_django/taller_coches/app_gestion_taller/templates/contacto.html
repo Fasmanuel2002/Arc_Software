@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block titulo %}Contacto{% endblock %}
+
+{% block contenido %}
+    <h2>Formulario de Contacto</h2>
+    <form method="post">
+        {% csrf_token %}
+
+        {% for campo in formulario %}
+            <div>
+                <label for="{{ campo.id_for_label }}">{{ campo.label }}</label><br>
+                {{ campo }}
+                {% if campo.errors %}
+                    <div style="color:red">{{ campo.errors }}</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <button type="submit">Enviar</button>
+    </form>
+{% endblock %}
