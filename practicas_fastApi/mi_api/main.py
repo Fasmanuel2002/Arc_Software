@@ -7,6 +7,10 @@ from database import Base
 from dependencies import get_db
 from pydantic import BaseModel
 
+from practicas_fastApi.mi_api import schemas
+from practicas_fastApi.mi_api import models
+from sqlalchemy.orm import selectinload
+
 app = FastAPI()
 
 class ItemCreate(BaseModel):
@@ -21,14 +25,31 @@ class ItemResponse(ItemCreate):
     class Config:
         from_attributes = True
 
-@app.post("/items/", response_model=ItemResponse)
-async def create_item(item: ItemCreate, db: AsyncSession = Depends(get_db)):
-    db_item = Item(**item.dict())
-    db.add(db_item)
+@app.post("/categorias/{cat_id}/items/", response_model=schemas.ItemDetalle)
+async def crear_item(cat_id: int, item: schemas.ItemBase, db: AsyncSession = Depends(get_db)):
+    nuevo_item = models.Item(**item.dict(), categoria_id=cat_id)
+    db.add(nuevo_item)
     await db.commit()
-    await db.refresh(db_item)
-    return db_item
+    await db.refresh(nuevo_item)
+    return nuevo_item
 
+@app.post("/items/{item_id}/tags/{tag_id}")
+async def asignar_tag(item_id: int, tag_id: int, db: AsyncSession = Depends(get_db)):
+    # Cargamos el item incluyendo sus tags actuales
+    res = await db.execute(
+        select(models.Item).where(models.Item.id == item_id).options(selectinload(models.Item.tags))
+    )
+    item = res.scalar_one_or_none()
+    
+    res_tag = await db.execute(select(models.Tag).where(models.Tag.id == tag_id))
+    tag = res_tag.scalar_one_or_none()
+
+    if not item or not tag:
+        raise HTTPException(status_code=404, detail="No encontrado")
+
+    item.tags.append(tag) # SQLAlchemy gestiona la tabla 'item_tag'
+    await db.commit()
+    return {"mensaje": "Tag vinculado con éxito"}
 @app.get("/items/{item_id}", response_model=ItemResponse)
 async def read_item(item_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Item).where(Item.id == item_id))
